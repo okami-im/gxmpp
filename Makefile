@@ -1,7 +1,7 @@
 MODULE := gxmpp
 
 ALL_PY_FILES = $(shell git ls-files -cm --others --exclude-standard | grep -i '\.py$$')
-DIFF_PY_FILES = $(shell git diff --diff-filter=D --name-only HEAD | grep -i '\.py$$')
+DIFF_PY_FILES = $(shell git diff --diff-filter=ACMRTU --name-only HEAD | grep -i '\.py$$')
 
 DO_DIFFONLY ?= 1
 DO_COV ?= 0

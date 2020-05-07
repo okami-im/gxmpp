@@ -16,31 +16,33 @@ UnescapedJID = namedtuple("UnescapedJID", "local domain resource")
 def _normalize_localpart(local):
     if local is None:
         return None
-    l = len(local.encode("utf-8"))
-    if not l or l > 1023:
-        raise ValueError(
-            "localpart must not be zero or exceed 1023 octets in length")
     try:
-        return _UsernameCaseMapped.enforce(local)
+        local = _UsernameCaseMapped.enforce(local)
     except UnicodeDecodeError as e:
         raise ValueError(
             "localpart failed to validate against UsernameCaseMapped PRECIS class"
         ) from e
+    l = len(local.encode("utf-8"))
+    if not l or l > 1023:
+        raise ValueError(
+            "localpart must not be zero or exceed 1023 octets in length")
+    return local
 
 
 def _normalize_resourcepart(resource):
     if resource is None:
         return None
-    l = len(resource.encode("utf-8"))
-    if not l or l > 1023:
-        raise ValueError(
-            "resourcepart must not be zero or exceed 1023 in length")
     try:
-        return _OpaqueString.enforce(resource)
+        resource = _OpaqueString.enforce(resource)
     except UnicodeDecodeError as e:
         raise ValueError(
             "resourcepart failed to validate against OpaqueString PRECIS class"
         ) from e
+    l = len(resource.encode("utf-8"))
+    if not l or l > 1023:
+        raise ValueError(
+            "resourcepart must not be zero or exceed 1023 in length")
+    return resource
 
 
 def _normalize_domainpart(domain):
