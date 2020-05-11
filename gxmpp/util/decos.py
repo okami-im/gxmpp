@@ -13,5 +13,5 @@ class reify(object):  # noqa:N801
         if this is None:
             return self
         val = self.wrapped(this)
-        setattr(this, self.wrapped.__name__, val)
+        object.__setattr__(this, self.wrapped.__name__, val)
         return val

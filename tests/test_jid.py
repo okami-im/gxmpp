@@ -42,6 +42,15 @@ def test_create():
         jid.JID.create("INVALID", "example.org", "\u200B")
 
 
+def test_dunders():
+    j1 = jid.JID.parse("porthos@銃士.lit")
+    with pytest.raises(AttributeError):
+        j1.local = "d'artagnan"
+    j2 = jid.JID.create("porthos", "xn--zqs335k.lit")
+    assert j1 == j2
+    assert hash(j1) == hash(j2)
+
+
 _valid_xep_0106_ish = {
     "whitelist_categories": ("Ll", "Lu", "Lo", "Nd", "Lm", "Mn", "Mc"),
     "whitelist_characters": jid._XEP_0106_ESCAPE_SEQ,

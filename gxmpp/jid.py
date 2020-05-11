@@ -127,15 +127,19 @@ def _unescape_localpart(local):
 
 
 class JID:
+    """
+    A JID. JID objects are immutable and their creation is cached.
+    """
+
     def __init__(self, local, domain, resource=None):
         """
         Create a JID from escaped parts.
         """
         if not domain:
             raise ValueError("domainpart cannot be empty or None")
-        self.local = local
-        self.domain = domain
-        self.resource = resource
+        object.__setattr__(self, "local", local)
+        object.__setattr__(self, "domain", domain)
+        object.__setattr__(self, "resource", resource)
 
     @classmethod
     @lru_cache(maxsize=1024)
@@ -187,6 +191,9 @@ class JID:
         """
         return UnescapedJID(_unescape_localpart(self.local), self.domain, self.resource)
 
+    def __repr__(self):
+        return "<JID {} at {}>".format(str(self), hex(id(self)))
+
     def __str__(self):
         s = ""
         if self.local is not None:
@@ -196,5 +203,19 @@ class JID:
             s += "/" + self.resource
         return s
 
-    def __repr__(self):
-        return "<JID {} at {}>".format(str(self), hex(id(self)))
+    def __eq__(self, other):
+        if self is other:
+            return True
+        elif not isinstance(other, JID):
+            return False
+        return (
+            self.local == other.local
+            and idna.encode(self.domain) == idna.encode(other.domain)
+            and self.resource == other.resource
+        )
+
+    def __hash__(self):
+        return hash((self.local, idna.encode(self.domain), self.resource))
+
+    def __setattr__(self, name, value):
+        raise AttributeError("can't set attribute")
