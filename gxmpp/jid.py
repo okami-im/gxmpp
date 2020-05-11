@@ -127,6 +127,10 @@ def _unescape_localpart(local):
 
 
 class JID:
+    # TODO: it'd be worthwhile adding __slots__
+    # but for the time being, I can't be arsed to figure out
+    # a C(ython, probably) implementation of reify, so it'll
+    # have to wait. Oh well!
     """
     A JID. JID objects are immutable and their creation is cached.
     """
@@ -209,13 +213,16 @@ class JID:
         elif not isinstance(other, JID):
             return False
         return (
-            self.local == other.local
-            and idna.encode(self.domain) == idna.encode(other.domain)
-            and self.resource == other.resource
+            self.local == other.local and
+            idna.encode(self.domain) == idna.encode(other.domain) and
+            self.resource == other.resource
         )
 
     def __hash__(self):
         return hash((self.local, idna.encode(self.domain), self.resource))
 
     def __setattr__(self, name, value):
+        if name not in self.__dict__:
+            raise AttributeError("'{}' object has no attribute '{}'".format(
+                self.__class__.__name__, name))
         raise AttributeError("can't set attribute")
