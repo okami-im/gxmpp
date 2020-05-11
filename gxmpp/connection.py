@@ -11,7 +11,11 @@ from gevent import socket
 from gxmpp.util.log import Log
 
 
-class _Resolver(Log):
+class ResolverError(Exception):
+    pass
+
+
+class Resolver(Log):
     def __init__(self, service_template, resolver, prefer_ipv6):
         self._tmpl = service_template
         self._resolver = resolver
@@ -57,9 +61,10 @@ class _Resolver(Log):
         if ipv4:
             return ipv4
         if not tried_ipv6:
-            return self._try_ipv6(host)
-        raise self.NoOptionsError(
-            "ran out of options while trying to resolve: {}".format(host))
+            ipv6 = self._try_ipv6(host)
+            if ipv6:
+                return ipv6
+        raise ResolverError("failed to resolve: {}".format(host))
 
     def _try_ipv6(self, host):
         try:
@@ -141,6 +146,3 @@ class _Resolver(Log):
             rec = self._current_group.pop(choice)
             self._current_group.total_weight -= rec.weight
             return list(self._resolver.resolveaddr(rec.target)), rec.port
-
-    class NoOptionsError(Exception):
-        pass
