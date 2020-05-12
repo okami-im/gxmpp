@@ -33,6 +33,7 @@ setup(
         "gevent>=20.5.0",
         "gevent[dnspython]",
         "dnspython>=1.16.0",
+        "lxml>=4.5.0",
         "idna>=2.9",
         "precis-i18n>=1.0.1",
     ],
