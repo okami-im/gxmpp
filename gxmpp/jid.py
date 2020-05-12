@@ -6,7 +6,7 @@ from functools import lru_cache
 import idna
 import precis_i18n
 
-from gxmpp.util.decos import reify
+from gxmpp.util.decos import slot_reify
 
 _UsernameCaseMapped = precis_i18n.get_profile("UsernameCaseMapped")
 _OpaqueString = precis_i18n.get_profile("OpaqueString")
@@ -127,13 +127,11 @@ def _unescape_localpart(local):
 
 
 class JID:
-    # TODO: it'd be worthwhile adding __slots__
-    # but for the time being, I can't be arsed to figure out
-    # a C(ython, probably) implementation of reify, so it'll
-    # have to wait. Oh well!
     """
     A JID. JID objects are immutable and their creation is cached.
     """
+
+    __slots__ = ("local", "domain", "resource", "_bare", "_unescaped")
 
     def __init__(self, local, domain, resource=None):
         """
@@ -141,9 +139,9 @@ class JID:
         """
         if not domain:
             raise ValueError("domainpart cannot be empty or None")
-        object.__setattr__(self, "local", local)
-        object.__setattr__(self, "domain", domain)
-        object.__setattr__(self, "resource", resource)
+        super().__setattr__("local", local)
+        super().__setattr__("domain", domain)
+        super().__setattr__("resource", resource)
 
     @classmethod
     @lru_cache(maxsize=1024)
@@ -175,7 +173,7 @@ class JID:
             resource=_normalize_resourcepart(resource),
         )
 
-    @reify
+    @slot_reify  # associated with __bare slot
     def bare(self):
         """
         Form a bare JID. A bare JID is a JID without its resourcepart.
@@ -184,7 +182,7 @@ class JID:
             return self.local + "@" + self.domain
         return self.domain
 
-    @reify
+    @slot_reify  # associated with __unescaped slot
     def unescaped(self):
         """
         Unescape a JID. The result of this method is not an instance
@@ -222,7 +220,7 @@ class JID:
         return hash((self.local, idna.encode(self.domain), self.resource))
 
     def __setattr__(self, name, value):
-        if name not in self.__dict__:
+        if name not in self.__slots__:
             raise AttributeError("'{}' object has no attribute '{}'".format(
                 self.__class__.__name__, name))
         raise AttributeError("can't set attribute")
