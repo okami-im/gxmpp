@@ -63,5 +63,4 @@ def test_xep_0106(localpart):
         localpart[0] == " " or localpart[-1] == " "
     ):  # we test this one separately in test_create
         return
-    assert jid._unescape_localpart(
-        jid._escape_localpart(localpart)) == localpart
+    assert jid._unescape_localpart(jid._escape_localpart(localpart)) == localpart

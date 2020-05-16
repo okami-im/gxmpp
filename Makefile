@@ -25,7 +25,7 @@ lint:
 
 .PHONY: test
 format:
-	autopep8 --in-place $(PY_FILES)
+	black -q $(PY_FILES)
 	isort -y $(PY_FILES)
 
 .PHONY: test

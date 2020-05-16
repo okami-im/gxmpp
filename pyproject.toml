@@ -1,0 +1,5 @@
+[tool.black]
+# check setup.cfg [isort].line_length for clarification
+line-length = 86
+# keep in sync with tox runner configuration
+target-version = ['py35', 'py36']

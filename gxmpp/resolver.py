@@ -18,14 +18,18 @@ class ServerPicker:
     @classmethod
     def from_srv_answer(cls, resolver, answer):
         prios = []
-        for k, g in itertools.groupby(sorted(answer, key=lambda s: (s.priority, s.weight), reverse=True), key=lambda s: s.priority):
+        for k, g in itertools.groupby(
+            sorted(answer, key=lambda s: (s.priority, s.weight), reverse=True),
+            key=lambda s: s.priority,
+        ):
             entries = []
             total_weight = 0
             for entry in g:
                 entries.append(entry)
                 total_weight += entry.weight
-            prios.append(ServerPicker.PriorityGroup(
-                entries=entries, total_weight=total_weight))
+            prios.append(
+                ServerPicker.PriorityGroup(entries=entries, total_weight=total_weight)
+            )
         return cls(resolver, prios)
 
     def __iter__(self):
@@ -91,12 +95,18 @@ class Resolver(Log):
                 ipv6 = ipv6.address
             return ipv4, ipv6
 
-        return list(map(map_address_pair,
-                        itertools.zip_longest(self._query(qname, dns.rdatatype.A),
-                                              self._query(qname, dns.rdatatype.AAAA))))
+        return list(
+            map(
+                map_address_pair,
+                itertools.zip_longest(
+                    self._query(qname, dns.rdatatype.A),
+                    self._query(qname, dns.rdatatype.AAAA),
+                ),
+            )
+        )
 
     def _try_inet(self, host):
-        host = host.strip('[]')
+        host = host.strip("[]")
         try:
             socket.inet_pton(socket.AF_INET6, host)
             return None, host
@@ -121,8 +131,13 @@ class Resolver(Log):
             self.log.debug("_query: missing %s record for %s", rdtype_s, qname)
         except dns.exception.Timeout:
             self.log.warning(
-                "_query: timed out while querying %s record for %s", rdtype_s, qname)
+                "_query: timed out while querying %s record for %s", rdtype_s, qname
+            )
         except dns.exception.DNSException:
             self.log.error(
-                "_query: DNS failed while querying %s record for %s", rdtype_s, qname, exc_info=True)
+                "_query: DNS failed while querying %s record for %s",
+                rdtype_s,
+                qname,
+                exc_info=True,
+            )
         return []  # FIXME: kinda nasty but oh well

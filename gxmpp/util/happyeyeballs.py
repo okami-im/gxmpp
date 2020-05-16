@@ -21,11 +21,13 @@ class _Cancel(Exception):
 
 
 # this function does, indeed, have cyclomatic complexity of 32
-def create_connection(address,
-                      timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
-                      dns_timeout=None,
-                      source_address=None,
-                      use_happyeyeballs=True):
+def create_connection(
+    address,
+    timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
+    dns_timeout=None,
+    source_address=None,
+    use_happyeyeballs=True,
+):
     _log.debug("create_connection %r", address)
     (host, port, *_) = address
     try:
@@ -38,9 +40,8 @@ def create_connection(address,
         # as our default, but it hasn't changed for 12 years so we're probably
         # gonna be fine; maybe!
         return socket.create_connection(
-            address,
-            timeout=timeout,
-            source_address=source_address)
+            address, timeout=timeout, source_address=source_address
+        )
 
     group = pool.Group()
     # TODO: OK, I'm gonna be honest: this system of greenlet orchestration
@@ -54,13 +55,20 @@ def create_connection(address,
     bus = queue.Queue()
 
     def _do_gai(family, proto=0, flags=0):
-        _log.debug("_do_gai: started family=%s, proto=%d, flags=%s",
-                   family, proto, flags)
+        _log.debug(
+            "_do_gai: started family=%s, proto=%d, flags=%s", family, proto, flags
+        )
         try:
             addrs = gevent.with_timeout(
-                dns_timeout, socket.getaddrinfo,
-                host, port, family, socket.SOCK_STREAM,
-                proto, flags)
+                dns_timeout,
+                socket.getaddrinfo,
+                host,
+                port,
+                family,
+                socket.SOCK_STREAM,
+                proto,
+                flags,
+            )
             _log.debug("_do_gai: finished family=%s, addrs=%r", family, addrs)
             while addrs:
                 (*_, addr) = addrs.pop()
@@ -69,7 +77,8 @@ def create_connection(address,
             _log.debug("_do_gai: cancelled family=%s", family)
         except gevent.Timeout:
             bus.put(
-                (-1, (family, None, socket.gaierror(-errno.ETIMEDOUT, "Timed out"))))
+                (-1, (family, None, socket.gaierror(-errno.ETIMEDOUT, "Timed out")))
+            )
         except Exception as e:
             bus.put((-1, (family, None, e)))
 
@@ -86,10 +95,13 @@ def create_connection(address,
         try:
             sock.connect(addr)
             _log.debug(
-                "_do_connect: finished family=%s, addr=%s, socket=%r", family, addr, sock)
+                "_do_connect: finished family=%s, addr=%s, socket=%r",
+                family,
+                addr,
+                sock,
+            )
         except _Cancel:
-            _log.debug(
-                "_do_connect: cancelled family=%s, addr=%s", family, addr)
+            _log.debug("_do_connect: cancelled family=%s, addr=%s", family, addr)
         except Exception as e:
             bus.put((-2, (family, addr, e)))
         except:

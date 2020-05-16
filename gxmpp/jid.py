@@ -24,8 +24,7 @@ def _normalize_localpart(local):
         ) from e
     l = len(local.encode("utf-8"))
     if not l or l > 1023:
-        raise ValueError(
-            "localpart must not be zero or exceed 1023 octets in length")
+        raise ValueError("localpart must not be zero or exceed 1023 octets in length")
     return local
 
 
@@ -40,8 +39,7 @@ def _normalize_resourcepart(resource):
         ) from e
     l = len(resource.encode("utf-8"))
     if not l or l > 1023:
-        raise ValueError(
-            "resourcepart must not be zero or exceed 1023 in length")
+        raise ValueError("resourcepart must not be zero or exceed 1023 in length")
     return resource
 
 
@@ -66,7 +64,8 @@ def _normalize_domainpart(domain):
         raise ValueError("domainpart must be a valid IDN string") from e
     if not domain or len(domain) > 1023:
         raise ValueError(
-            "domainpart must not be zero or exceed 1023 octets in length")
+            "domainpart must not be zero or exceed 1023 octets in length"
+        )
     return domain.decode("utf-8")
 
 
@@ -191,7 +190,9 @@ class JID:
         JID must not be used for comparison purposes or in creation of
         XML stanzas to be sent to another network entity.
         """
-        return UnescapedJID(_unescape_localpart(self.local), self.domain, self.resource)
+        return UnescapedJID(
+            _unescape_localpart(self.local), self.domain, self.resource
+        )
 
     def __repr__(self):
         return "<JID {} at {}>".format(str(self), hex(id(self)))
@@ -211,9 +212,9 @@ class JID:
         elif not isinstance(other, JID):
             return False
         return (
-            self.local == other.local and
-            idna.encode(self.domain) == idna.encode(other.domain) and
-            self.resource == other.resource
+            self.local == other.local
+            and idna.encode(self.domain) == idna.encode(other.domain)
+            and self.resource == other.resource
         )
 
     def __hash__(self):
@@ -221,6 +222,9 @@ class JID:
 
     def __setattr__(self, name, value):
         if name not in self.__slots__:
-            raise AttributeError("'{}' object has no attribute '{}'".format(
-                self.__class__.__name__, name))
+            raise AttributeError(
+                "'{}' object has no attribute '{}'".format(
+                    self.__class__.__name__, name
+                )
+            )
         raise AttributeError("can't set attribute")

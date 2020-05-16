@@ -38,7 +38,7 @@ setup(
         "precis-i18n>=1.0.1",
     ],
     tests_require=tests_require,
-    extras_require={"testing": tests_require, },
+    extras_require={"testing": tests_require,},
     test_suite="py.test",
     zip_safe=False,
     platforms="any",
