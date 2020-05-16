@@ -61,20 +61,20 @@ class XMLStream(ABC):
 
     @abstractmethod
     def handle_stream_start(self, elem):
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def handle_element(self, elem):
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
-    def handle_parse_error(self, typ, value, tb):
-        pass
+    def handle_parse_error(self, exc_type, exc_value, exc_traceback):
+        pass  # pragma: no cover
 
     @abstractmethod
     def handle_stream_end(self):
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def handle_close(self):
-        pass
+        pass  # pragma: no cover
