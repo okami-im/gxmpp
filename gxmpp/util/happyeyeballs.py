@@ -20,6 +20,46 @@ class _Cancel(Exception):
     pass
 
 
+def _create_connection(
+    address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, source_address=None, prepare=None
+):
+    # Taken from:
+    # https://github.com/python/cpython/blob/0f40482fde59ff307569fa5676183dd8432809a8/Lib/socket.py#L771
+    # Licensed under the PSFL, version 2
+    # Copyright (c) 2001-now Python Software Foundation
+    host, port = address
+    err = None
+    for res in socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM):
+        af, socktype, proto, canonname, sa = res
+        sock = None
+        try:
+            sock = socket(af, socktype, proto)
+            if timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:
+                sock.settimeout(timeout)
+            if source_address:
+                sock.bind(source_address)
+            if prepare:
+                prepare(sock)
+            sock.connect(sa)
+            # Break explicitly a reference cycle
+            err = None
+            return sock
+
+        except socket.error as e:
+            err = e
+            if sock is not None:
+                sock.close()
+
+    if err is not None:
+        try:
+            raise err
+        finally:
+            # Break explicitly a reference cycle
+            err = None
+    else:
+        raise socket.error("getaddrinfo returns an empty list")
+
+
 # this function does, indeed, have cyclomatic complexity of 32
 def create_connection(
     address,
@@ -27,6 +67,7 @@ def create_connection(
     dns_timeout=None,
     source_address=None,
     use_happyeyeballs=True,
+    prepare=None,
 ):
     _log.debug("create_connection %r", address)
     (host, port, *_) = address
@@ -39,8 +80,8 @@ def create_connection(
         # TODO: a bit problematic we use socket's hidden timeout sentinel
         # as our default, but it hasn't changed for 12 years so we're probably
         # gonna be fine; maybe!
-        return socket.create_connection(
-            address, timeout=timeout, source_address=source_address
+        return _create_connection(
+            address, timeout=timeout, source_address=source_address, prepare=prepare
         )
 
     group = pool.Group()
@@ -92,6 +133,8 @@ def create_connection(
         sock = socket.socket(family, socket.SOCK_STREAM)
         if source_address:
             sock.bind(source_address)
+        if prepare:
+            prepare(sock)
         try:
             sock.connect(addr)
             _log.debug(
@@ -150,13 +193,13 @@ def create_connection(
                 errors.append(rest)
                 dns_attempts -= 1
                 if dns_attempts <= 0:
-                    raise OSError(errors)
+                    raise socket.error(errors)
                 continue
             elif op == -2:
                 errors.append(rest)
                 conn_attempts -= 1
                 if conn_attempts <= 0:
-                    raise OSError(errors)
+                    raise socket.error(errors)
                 continue
             family, addr = rest
             conn_attempts += 1
