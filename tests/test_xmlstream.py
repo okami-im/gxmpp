@@ -1,13 +1,14 @@
+import gevent
 import pytest
-from gevent.queue import Queue
+from gevent import queue, socket
 from lxml import etree
 
 from gxmpp.util.xml import element_eq
-from gxmpp.xmlstream import XMLStream
+from gxmpp.xmlstream import BaseXMLStream, XMLStream
 
 
-def test_xmlstream():
-    q = Queue()
+def test_basexmlstream():
+    q = queue.Queue()
 
     def expected(event, elem=None):
         e, el = q.get(block=False)
@@ -15,7 +16,7 @@ def test_xmlstream():
         if elem is not None:
             assert element_eq(el, elem)
 
-    class TestStream(XMLStream):
+    class TestStream(BaseXMLStream):
         def handle_stream_start(self, elem):
             q.put(("stream_start", elem))
 
@@ -45,3 +46,41 @@ def test_xmlstream():
     with pytest.raises(etree.XMLSyntaxError, match="[eE]xtra content"):
         t._feed("</stream>")
     expected("close")
+
+
+def test_xmlstream():
+    # TODO: a better framework for testing stuff like this
+    q = queue.Queue()
+    lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    lsock.bind(("127.0.0.1", 0))
+    addr = lsock.getsockname()
+
+    def _server():
+        with lsock:
+            lsock.listen()
+            conn, _ = lsock.accept()
+            with conn:
+                for iq in q:
+                    op, data = iq
+                    if op != 0:
+                        break
+                    conn.sendall(data)
+
+    serverlet = gevent.spawn(_server)
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect(addr)
+        x = XMLStream()
+        x.sock = sock
+        q.put((0, b"<stream><message/><message/>"))
+        e = x.run(once=True)
+        assert x.started
+        assert e.tag == "message"
+        e = x.run(once=True)
+        assert e.tag == "message"
+        q.put((0, b"</stream>"))
+        assert not x.run(once=True)
+        q.put((1, b""))
+        assert not x.run(once=True)
+    finally:
+        serverlet.kill()
